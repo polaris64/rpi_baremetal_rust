@@ -1,0 +1,6 @@
+kernel.*
+
+build/*
+docs/*
+toolchain/*
+!toolchain/.gitkeep

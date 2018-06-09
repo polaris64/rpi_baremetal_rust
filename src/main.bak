@@ -1,0 +1,53 @@
+/*
+Example kernel for Raspberry Pi 2
+*/
+.section .init
+.globl _start
+
+_start:
+  ldr r0,=0x3F200000 @ GPIO base address (0x20200000 on Pi < 2)
+
+  /*
+  Enable output to 47th GPIO pin (ACT LED)
+  Pin 47 is in the fourth set of 10 pins and each set uses 4 bytes, so
+  the base is +16 bytes. Each pin takes 3 bits, so the 7th pin from the
+  base (40th) starts at bit 7*3 = 21.
+  */
+  mov r1,#1
+  lsl r1,#21        @ Left-shift 1 bit to 21st position
+  str r1,[r0,#0x10] @ Store value at GPIO + 16 bytes (4th bank of 4 bytes = 16 bytes (+0x10), GPFSEL4)
+
+  led_loop$:
+    /*
+      GPCLR0 and GPSET0 manage pins 0-32
+      GPCLR1 and GPSET1 manage pins 0-54
+    */
+    mov r3,#0x2C @ Clear pin output (GPCLR1)
+
+    /*
+    Turn the OK LED on (pull the pin low)
+    GPIO + 0x20: GPIO pin output set 1 (GPSET1)
+    GPIO + 0x2C: GPIO pin output clear 1 (GPCLR1)
+    */
+    toggle_led$:
+      mov r1,#1
+      lsl r1,#15     @ Left-shift to 15th bit (47th pin - 32 (first pin on CLEAR1/SET1) = 15)
+      str r1,[r0,r3] @ GPIO + [r3] bytes (GPIO pin output clear/set 1)
+
+    /*
+    Simple delay loop
+    */
+    mov r2,#0x0F0000
+    wait1$:
+      sub r2,#1
+      cmp r2,#0
+      bne wait1$
+
+    /*
+    If r3 is not set to #0x2C, start led_loop again
+    */
+    cmp r3,#0x2C
+    bne led_loop$
+
+    mov r3,#0x20 @ Set pin output (GPSET1)
+    b toggle_led$

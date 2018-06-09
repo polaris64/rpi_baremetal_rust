@@ -1,0 +1,66 @@
+/*
+Example kernel for Raspberry Pi 2
+*/
+.section .init
+.globl _start
+
+_start:
+  b main
+
+.section .text
+main:
+
+  /*
+  Stack starts at 0x8000 (growing down), which is below the .init section
+  */
+  mov sp,#0x8000
+
+  b kernel_main
+
+
+  pinNum  .req r0
+  pinFunc .req r1
+
+  /*
+  Enable output to 47th GPIO pin (ACT LED)
+  Pin 47 is in the fourth set of 10 pins and each set uses 4 bytes, so
+  the base is +16 bytes. Each pin takes 3 bits, so the 7th pin from the
+  base (40th) starts at bit 7*3 = 21.
+  */
+  mov pinNum,#47 @ ACT LED GPIO pin
+  mov pinFunc,#1 @ Enable output
+  bl SetGpioFunction
+  .unreq pinNum
+  .unreq pinFunc
+
+  toggle .req r4
+
+  led_loop$:
+    mov toggle,#1
+
+    toggle_led$:
+      pinNum .req r0
+      pinVal .req r1 
+      mov pinNum,#47
+      mov pinVal,toggle
+      bl SetGpio
+      .unreq pinNum
+      .unreq pinVal
+
+    /*
+    Simple delay loop
+    */
+    mov r2,#0x080000
+    wait1$:
+      sub r2,#1
+      cmp r2,#0
+      bne wait1$
+
+    /*
+    If toggle is not set to #1, start led_loop again
+    */
+    teq toggle,#1
+    bne led_loop$
+
+    mov toggle,#0
+    b toggle_led$
