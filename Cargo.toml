@@ -1,0 +1,23 @@
+[package]
+name = "os-rpi"
+version = "0.1.0"
+authors = ["Simon Pugnet <simon@polaris64.net>"]
+
+[dependencies]
+rlibc = "1.0.0"
+
+[lib]
+crate-type = ["staticlib"]
+name = "os_rpi"
+
+[profile.dev]
+incremental = false
+lto = true
+opt-level = 3
+panic = "abort"
+
+[profile.release]
+incremental = false
+lto = true
+opt-level = 3
+panic = "abort"

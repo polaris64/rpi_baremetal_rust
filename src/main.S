@@ -2,7 +2,7 @@
 Example kernel for Raspberry Pi 2
 */
 .section ".text.boot"
-.global _start
+.globl _start
 
 _start:
 

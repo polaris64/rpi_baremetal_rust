@@ -1,6 +1,16 @@
 kernel.*
 
+.gdb_history
+.gdbinit
+
 build/*
 docs/*
 toolchain/*
 !toolchain/.gitkeep
+
+/target
+**/*.rs.bk
+
+/target
+**/*.rs.bk
+Cargo.lock
