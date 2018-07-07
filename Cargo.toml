@@ -6,6 +6,10 @@ authors = ["Simon Pugnet <simon@polaris64.net>"]
 [dependencies]
 rlibc = "1.0.0"
 
+[dependencies.wee_alloc]
+version = "*"
+features = ["static_array_backend"]
+
 [lib]
 crate-type = ["staticlib"]
 name = "os_rpi"
@@ -13,7 +17,7 @@ name = "os_rpi"
 [profile.dev]
 incremental = false
 lto = true
-opt-level = 3
+opt-level = 1
 panic = "abort"
 
 [profile.release]

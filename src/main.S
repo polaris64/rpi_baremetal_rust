@@ -75,7 +75,7 @@ _start:
   allowing a return from the kernel_main subroutine. Upon return, the following
   "halt:" label will be hit, halting this CPU core.
   */
-  bl kernel_main
+  bl rust_main
   /*
   ldr r3, =kernel_main
   blx r3
