@@ -101,7 +101,7 @@ pub extern fn string_test(num: u32) {
             &test_box
         )
     );
-    uart_puts(&s);
+    Uart::puts(&s);
 }
 
 mod font8x8;
@@ -110,53 +110,46 @@ mod gpio;
 mod mmio;
 mod uart;
 
-use uart::{uart_init, uart_putc, uart_getc, uart_puts};
-use framebuffer::{
-    FBInitResult,
-    FrameBufferInfo,
-    Pixel24,
-    fb24_draw_test_pattern,
-    fb24_putcursor,
-    fb24_writechar,
-    fb24_write_string,
-    init_framebuffer,
-};
+use uart::Uart;
+use framebuffer::{FrameBuffer24, Pixel24};
 
 #[no_mangle]
 pub extern "C" fn rust_main() {
-    uart_init();
+    Uart::init();
 
-    uart_puts("Initialising framebuffer...\n");
-
-    let mut fbinfo: FrameBufferInfo = FrameBufferInfo::new();
-    let fb_res:     FBInitResult    = init_framebuffer(&mut fbinfo, 800, 600, 24);
     let col_blue:   Pixel24 = Pixel24 {r: 100, g: 128, b: 250};
     let col_green:  Pixel24 = Pixel24 {r: 100, g: 250, b: 128};
     let col_white:  Pixel24 = Pixel24 {r: 255, g: 255, b: 255};
 
-    match fb_res {
-        FBInitResult::Success => {
-            uart_puts("Framebuffer initialised, displaying info...\n");
-            let s = format(format_args!("{:?}", fbinfo));
-            uart_puts(&s);
-            uart_puts("\n");
-            fb24_draw_test_pattern(&fbinfo);
+    Uart::puts("Initialising framebuffer... ");
 
-            fb24_write_string(&mut fbinfo, "-------------------------------------------------------------------------------\n",   &col_blue);
-            fb24_write_string(&mut fbinfo, "--== Welcome to the Raspberry Pi bare-metal system, by Simon Pugnet (2018) ==--\n",   &col_blue);
-            fb24_write_string(&mut fbinfo, "-------------------------------------------------------------------------------\n\n", &col_blue);
-            fb24_write_string(&mut fbinfo, "Framebuffer details: -\n", &col_green);
-            fb24_write_string(&mut fbinfo, &s, &col_green);
-            fb24_write_string(&mut fbinfo, "\n\n", &col_green);
+    let mut fb_res = FrameBuffer24::new(800, 600);
+
+    match fb_res {
+        Ok(ref mut fb) => {
+            Uart::puts("OK\n");
+            let s = format(format_args!("{:?}", fb));
+            fb.draw_test_pattern();
+            fb.write_string("-------------------------------------------------------------------------------\n",   &col_blue);
+            fb.write_string("--== Welcome to the Raspberry Pi bare-metal system, by Simon Pugnet (2018) ==--\n",   &col_blue);
+            fb.write_string("-------------------------------------------------------------------------------\n\n", &col_blue);
+            fb.write_string("Framebuffer details: -\n", &col_green);
+            fb.write_string(&s, &col_green);
+            fb.write_string("\n\n", &col_green);
         },
-        FBInitResult::RequestNotProcessed => uart_puts("Framebuffer: unable to process initialisation request\n"),
-        FBInitResult::ResponseError       => uart_puts("Framebuffer: initialisation error\n"),
+        Err(_) => Uart::puts("ERROR\n"),
     }
 
     loop {
-        fb24_putcursor(&fbinfo, &col_white);
-        let ch: u8 = uart_getc();
-        uart_putc(ch);
-        fb24_writechar(&mut fbinfo, ch as char, &col_white);
+        match fb_res {
+            Ok(ref mut fb) => fb.putcursor(&col_white),
+            _ => {},
+        }
+        let ch: u8 = Uart::getc();
+        Uart::putc(ch);
+        match fb_res {
+            Ok(ref mut fb) => fb.writechar(ch as char, &col_white),
+            _ => {},
+        }
     }
 }
