@@ -1,8 +1,3 @@
-
-CFLAGS = -mcpu=cortex-a7 -fpic -ffreestanding -std=gnu99 -O3 -Wall -Wextra
-
-LDFLAGS = -T linker.ld -ffreestanding -nostdlib
-
 # Toolchain path
 TOOLCHAIN_PATH = toolchain/bin/
 
@@ -27,7 +22,15 @@ MAP = kernel.map
 # Name of the linker script to use
 LINKER = linker.ld
 
-RUST_TOOLCHAIN = arm-unknown-linux-gnueabi
+# C compiler and linker flags
+#CFLAGS = -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -nostartfiles -specs=nosys.specs -ffunction-sections -Wl,-gc-sections -Wl,-T,linker.ld
+#CFLAGS = -mcpu=cortex-a7 -fpic -ffreestanding -std=gnu99 -O3 -Wall -Wextra
+CFLAGS = -mcpu=cortex-a7 -mfpu=vfp -mfloat-abi=hard -nostartfiles -fpic -ffreestanding -std=gnu99 -O3 -Wall -Wextra
+LDFLAGS = -T $(LINKER) -ffreestanding -nostdlib
+
+
+RUST_TOOLCHAIN = arm-unknown-linux-gnueabihf
+#RUST_TOOLCHAIN = arm-unknown-linux-gnueabi
 #RUST_TOOLCHAIN = arm-unknown-linux-musleabi
 RUST_LIB_DIR = target/$(RUST_TOOLCHAIN)/release/
 RUST_LIB = $(RUST_LIB_DIR)libos_rpi.a
@@ -67,7 +70,6 @@ $(TARGET): $(ELF)
 # Links an ELF executable for the kernel from all assembled object
 # files
 $(ELF): $(AS_OBJECTS) $(C_OBJECTS) $(LINKER) $(RUST_LIB)
-	echo $(RUST_LIB)
 	$(TOOLCHAIN_PATH)$(ARMGNU)-gcc $(LDFLAGS) -o $(ELF) $(AS_OBJECTS) $(C_OBJECTS) -L$(RUST_LIB_DIR) -los_rpi
 
 # Assembles all .S files in $SOURCE

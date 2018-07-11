@@ -66,20 +66,20 @@ _start:
 
   2:
     cmp r4, r9 /* End of BSS section? */
-    blo 1b     /* Branch backward to numeric label 1 */
+    blo 1b     /* If not, branch backward to numeric label 1 */
 
 
   /*
-  Branch to global kernel_main symbol
+  Branch to global rust_main symbol
   BL performs a branch and sets the LR (link register) to the next instruction,
-  allowing a return from the kernel_main subroutine. Upon return, the following
+  allowing a return from the rust_main subroutine. Upon return, the following
   "halt:" label will be hit, halting this CPU core.
   */
-  bl rust_main
   /*
-  ldr r3, =kernel_main
-  blx r3
+  bl rust_main
   */
+  ldr r3, =rust_main
+  blx r3
 
 
 halt:
