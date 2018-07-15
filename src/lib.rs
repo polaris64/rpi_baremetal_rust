@@ -78,31 +78,9 @@ pub fn __aeabi_unwind_cpp_pr1() {
     loop {}
 }
 
-//use alloc::arc::Arc;
-//use alloc::vec::Vec;
-//use alloc::string::String;
-
-use alloc::boxed::Box;
 use alloc::fmt::*;
+use alloc::string::String;
 
-#[no_mangle]
-pub extern fn add(lhs: u32, rhs: u32) -> u32 {
-    lhs + rhs
-}
-
-#[no_mangle]
-pub extern fn string_test(num: u32) {
-    let test_box = Box::new(42);
-    let s = format(
-        format_args!(
-            "Input number is {0}. Calling add({0}, {0}): result is {1}. Address of test_box is {2:p}",
-            num,
-            add(num, num),
-            &test_box
-        )
-    );
-    Uart::puts(&s);
-}
 
 mod font8x8;
 mod framebuffer;
@@ -112,6 +90,11 @@ mod uart;
 
 use uart::Uart;
 use framebuffer::{FrameBuffer24, Pixel24};
+
+fn write_prompt(fb: &mut FrameBuffer24, col: &Pixel24) {
+    fb.writechar('>', col);
+    fb.writechar(' ', col);
+}
 
 #[no_mangle]
 pub extern "C" fn rust_main() {
@@ -136,9 +119,12 @@ pub extern "C" fn rust_main() {
             fb.write_string("Framebuffer details: -\n", &col_green);
             fb.write_string(&s, &col_green);
             fb.write_string("\n\n", &col_green);
+            write_prompt(fb, &col_green);
         },
         Err(_) => Uart::puts("ERROR\n"),
     }
+
+    let mut command: String = String::with_capacity(255);
 
     loop {
         match fb_res {
@@ -148,8 +134,19 @@ pub extern "C" fn rust_main() {
         let ch: u8 = Uart::getc();
         Uart::putc(ch);
         match fb_res {
-            Ok(ref mut fb) => fb.writechar(ch as char, &col_white),
+            Ok(ref mut fb) => {
+                fb.writechar(ch as char, &col_white);
+                if ch as char == '\n' || ch as char == '\r' {
+                    let s = format(format_args!("Your command was: {}\n", command));
+                    fb.write_string(&s, &col_green);
+                    command.clear();
+                    write_prompt(fb, &col_green);
+                } else {
+                    command.push(ch as char);
+                }
+            },
             _ => {},
         }
+
     }
 }
