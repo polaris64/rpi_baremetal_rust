@@ -8,7 +8,7 @@ use std::alloc::{GlobalAlloc, Layout};
 */
 
 #![no_std]
-#![feature(alloc, allocator_api, core_intrinsics, heap_api, lang_items, panic_implementation)]
+#![feature(alloc, allocator_api, core_intrinsics, lang_items, panic_implementation)]
 
 // Linker symbols
 extern {
@@ -56,15 +56,17 @@ static GLOBAL: HeapAllocator = HeapAllocator;
 
 use core::panic::PanicInfo;
 
-#[panic_implementation]
+#[panic_handler]
 #[no_mangle]
 pub fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
+use core::alloc::Layout;
+
 #[lang = "oom"]
 #[no_mangle]
-pub extern "C" fn oom() -> ! {
+pub extern "C" fn oom(_layout: Layout) -> ! {
     loop {}
 }
 
